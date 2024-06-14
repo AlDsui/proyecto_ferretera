@@ -1,16 +1,16 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
 app = Flask (__name__)
-app.config['SQL_ALCHEMY_DATABASE_URI']='mysql+pymysql://root@localhost/flaskmysql'
+app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://root@localhost/Ferreteria'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
 class Producto(db.Model):
-    id = db.Column(db.Interger, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(70), unique=True)
     descripcion = db.Column(db.String(100))
     
@@ -18,21 +18,64 @@ class Producto(db.Model):
         self.nombre = nombre
         self.descripcion = descripcion
 
-db.create_all()
 
 class ProductoSchema(ma.Schema):
     class Meta:
         fields = ('id','nombre','descripcion')
     
-Producto_Schema = ProductoSchema()
-Producto_Schema = ProductoSchema(many=True)
+producto_schema = ProductoSchema()
+productos_schema = ProductoSchema(many=True)
 
-@app.route('/producto', methods=['POST'])
+@app.route('/productos', methods=['POST'])
 def create_producto():
     
-    print (request.json)
-    return 'received'
-
+    nombre= request.json['nombre']
+    descripcion = request.json['descripcion']
     
+    new_producto =  Producto(nombre, descripcion)
+    db.session.add(new_producto)
+    db.session.commit()
+    
+    return producto_schema.jsonify(new_producto)
+
+@app.route('/productos', methods=['GET'])
+def get_productos():
+    all_productos = Producto.query.all()
+    result = productos_schema.dump(all_productos)
+    return jsonify(result)
+
+@app.route('/productos/<id>', methods=['GET'])
+def get_producto(id):
+    producto = Producto.query.get(id)
+    return producto_schema.jsonify(producto)
+
+@app.route('/productos/<id>', methods=['PUT'])
+def update_productos(id):
+    producto = Producto.query.get(id)
+    
+    nombre = request.json['nombre']
+    descripcion = request.json['descripcion']
+    
+    producto.nombre = nombre
+    producto.descripcion = descripcion
+    
+    db.session.commit()
+    return producto_schema.jsonify(producto)
+
+@app.route('/producto/<id>', methods=['DELETE'])
+def delete_producto(id):
+    producto = Producto.query.get(id)
+    db.session.delete(producto)
+    db.session.commit()
+    
+    return producto_schema.jsonify(producto)
+
+
+@app.route('/', methods=['GET'])
+def index():
+    return jsonify({'message': 'welcome to my API baby'})
+
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
