@@ -56,3 +56,17 @@ def test_delete_producto(test_app):
     assert response.status_code == 200
     assert response.json['nombre'] == 'Sierra eléctrica'
 
+
+def test_create_producto_invalid_data(client):
+    response = client.post('/productos', json={
+        'nombre': '',
+        'descripcion': 'Descripción'
+    })
+    assert response.status_code == 400
+
+def test_update_producto_invalid_data(client):
+    response = client.put('/productos/1', json={
+        'nombre': 'Producto',
+        'descripcion': ''
+    })
+    assert response.status_code == 400

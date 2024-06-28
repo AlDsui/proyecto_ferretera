@@ -48,3 +48,27 @@ def test_delete_delivery(test_client):
     response = test_client.delete('/delivery/1')
     assert response.status_code == 200
     assert 'id_orden' in response.json
+    
+def test_create_delivery_invalid_data(client):
+    response = client.post('/delivery', json={
+        'id_orden': -1,
+        'f_entrega': '2024-13-01',  # Fecha inválida
+        'direccion': '123 Calle Falsa',
+        'est_entrega': 'En camino',
+        'conductor': 'Juan Pérez',
+        'patente_transp': 'XYZ123',
+        'costo_envio': -50.0
+    })
+    assert response.status_code == 400
+
+def test_update_delivery_invalid_data(client):
+    response = client.put('/delivery/1', json={
+        'id_orden': 1,
+        'f_entrega': '2024-01-32',  # Fecha inválida
+        'direccion': '',
+        'est_entrega': 'En camino',
+        'conductor': 'Juan Pérez',
+        'patente_transp': 'XYZ123',
+        'costo_envio': 50.0
+    })
+    assert response.status_code == 400

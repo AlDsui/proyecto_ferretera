@@ -43,3 +43,20 @@ def test_delete_precio(test_client):
     response = test_client.delete('/precio/1')
     assert response.status_code == 200
     assert 'id' in response.json
+    
+    
+def test_create_precio_invalid_data(client):
+    response = client.post('/precio', json={
+        'valor': -10.0,
+        'moneda': '',
+        'estado': 'Activo'
+    })
+    assert response.status_code == 400
+
+def test_update_precio_invalid_data(client):
+    response = client.put('/precio/1', json={
+        'valor': 10.0,
+        'moneda': 'USD',
+        'estado': ''
+    })
+    assert response.status_code == 400

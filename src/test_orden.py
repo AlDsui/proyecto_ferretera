@@ -42,3 +42,24 @@ def test_delete_orden(test_client):
     response = test_client.delete('/orden/1')
     assert response.status_code == 200
     assert 'id' in response.json
+
+
+def test_create_orden_invalid_data(client):
+    response = client.post('/orden', json={
+        'id_cli': -1,
+        'id_carrito': 1,
+        'fecha': '2024-13-01',  # Fecha inválida
+        'direccion': '123 Calle Falsa',
+        'total': -100.0
+    })
+    assert response.status_code == 400
+
+def test_update_orden_invalid_data(client):
+    response = client.put('/orden/1', json={
+        'id_cli': 1,
+        'id_carrito': -1,
+        'fecha': '2024-01-32',  # Fecha inválida
+        'direccion': '',
+        'total': 100.0
+    })
+    assert response.status_code == 400

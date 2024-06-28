@@ -47,3 +47,31 @@ def test_delete_inventario(test_client):
     response = test_client.delete('/inventario/1')
     assert response.status_code == 200
     assert 'id' in response.json
+    
+
+def test_create_inventario_invalid_data(client):
+    response = client.post('/inventario', json={
+        'nombre': 'Producto',
+        'descripcion': 'Descripción',
+        'categoria': '',
+        'precio_unit': -5.0,
+        'cant_disp': 10,
+        'cant_minima': 2,
+        'f_adqu': '2024-01-01',
+        'f_venc': '2023-12-31'  # Fecha de vencimiento antes que fecha de adquisición
+    })
+    assert response.status_code == 400
+
+def test_update_inventario_invalid_data(client):
+    response = client.put('/inventario/1', json={
+        'nombre': '',
+        'descripcion': 'Descripción',
+        'categoria': 'Categoría',
+        'precio_unit': 10.0,
+        'cant_disp': -5,
+        'cant_minima': 2,
+        'f_adqu': '2024-01-01',
+        'f_venc': '2023-12-31'  # Fecha de vencimiento antes que fecha de adquisición
+    })
+    assert response.status_code == 400
+

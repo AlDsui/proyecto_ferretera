@@ -54,3 +54,25 @@ def test_delete_carrito(test_client):
     response = test_client.delete('/carritos/1')
     assert response.status_code == 200
     assert 'id' in response.json
+
+def test_create_carrito_invalid_data(client):
+    response = client.post('/carritos', json={
+        'id_producto': -1,
+        'id_cli': 1,
+        'nombre': 'Producto',
+        'descripcion': 'Descripción',
+        'costo': -10.0,
+        'cantidad': 5
+    })
+    assert response.status_code == 400
+
+def test_update_carrito_invalid_data(client):
+    response = client.put('/carritos/1', json={
+        'id_producto': 1,
+        'id_cli': 1,
+        'nombre': 'Producto',
+        'descripcion': 'Descripción',
+        'costo': 10.0,
+        'cantidad': -5
+    })
+    assert response.status_code == 400

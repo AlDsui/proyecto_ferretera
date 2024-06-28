@@ -48,3 +48,26 @@ def test_delete_cliente(test_client):
     response = test_client.delete('/cliente/1')
     assert response.status_code == 200
     assert 'run' in response.json
+
+
+def test_create_cliente_invalid_data(client):
+    response = client.post('/cliente', json={
+        'run': '',
+        'nombre': 'Juan',
+        'apellido': 'Pérez',
+        'direccion': '123 Calle Falsa',
+        'telefono': '12345678',
+        'correo': 'juan@example.com'
+    })
+    assert response.status_code == 400
+
+def test_update_cliente_invalid_data(client):
+    response = client.put('/cliente/1', json={
+        'run': '12345678-9',
+        'nombre': '',
+        'apellido': 'Pérez',
+        'direccion': '123 Calle Falsa',
+        'telefono': '12345678',
+        'correo': 'juan@example.com'
+    })
+    assert response.status_code == 400

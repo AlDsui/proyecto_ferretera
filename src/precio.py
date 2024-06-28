@@ -3,71 +3,116 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from moldels import *
 
-app = Flask (__name__)
-app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://root@localhost/Ferreteria'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root@localhost/Ferreteria'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
 class PrecioSchema(ma.Schema):
     class Meta:
-        fields = ('id','valor','moneda','estado')
-    
+        fields = ('id', 'valor', 'moneda', 'estado')
+
 precio_schema = PrecioSchema()
 precios_schema = PrecioSchema(many=True)
 
 @app.route('/precio', methods=['POST'])
 def create_precio():
-    
-    valor = request.json['valor']
-    moneda = request.json['moneda']
-    estado = request.json['estado']
-    
-    new_precio =  Precio(valor, moneda, estado)
-    db.session.add(new_precio)
-    db.session.commit()
-    
-    return precio_schema.jsonify(new_precio)
+    try:
+        valor = request.json['valor']
+        moneda = request.json['moneda']
+        estado = request.json['estado']
+        
+        if not isinstance(valor, (int, float)) or valor <= 0:
+            return jsonify({"error": "Valor debe ser un número positivo"}), 400
+        
+        if not moneda or not isinstance(moneda, str):
+            return jsonify({"error": "Moneda es requerida y debe ser una cadena"}), 400
+        
+        if not estado or not isinstance(estado, str):
+            return jsonify({"error": "Estado es requerido y debe ser una cadena"}), 400
+        
+        new_precio = Precio(valor, moneda, estado)
+        db.session.add(new_precio)
+        db.session.commit()
+        
+        return precio_schema.jsonify(new_precio), 201
+
+    except KeyError as e:
+        return jsonify({"error": f"Campo faltante: {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/precio', methods=['GET'])
 def get_precio():
-    all_precio = Precio.query.all()
-    result = precio_schema.dump(all_precio)
-    return jsonify(result)
+    try:
+        all_precio = Precio.query.all()
+        result = precios_schema.dump(all_precio)
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/precio/<id>', methods=['GET'])
-def get_precios(id):
-    precio = Precio.query.get(id)
-    return precio_schema.jsonify(precio)
+def get_precio_by_id(id):
+    try:
+        precio = Precio.query.get(id)
+        if precio is None:
+            return jsonify({"error": "Precio no encontrado"}), 404
+        return precio_schema.jsonify(precio), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/precio/<id>', methods=['PUT'])
 def update_precio(id):
-    precio = Precio.query.get(id)
-    
-    valor = request.json['valor']
-    moneda = request.json['moneda']
-    estado = request.json['estado']
-    
-    precio.valor = valor
-    precio.moneda = moneda
-    precio.estado = estado
-    
-    db.session.commit()
-    return precio_schema.jsonify(precio)
+    try:
+        precio = Precio.query.get(id)
+        if precio is None:
+            return jsonify({"error": "Precio no encontrado"}), 404
+
+        valor = request.json['valor']
+        moneda = request.json['moneda']
+        estado = request.json['estado']
+        
+        if not isinstance(valor, (int, float)) or valor <= 0:
+            return jsonify({"error": "Valor debe ser un número positivo"}), 400
+        
+        if not moneda or not isinstance(moneda, str):
+            return jsonify({"error": "Moneda es requerida y debe ser una cadena"}), 400
+        
+        if not estado or not isinstance(estado, str):
+            return jsonify({"error": "Estado es requerido y debe ser una cadena"}), 400
+        
+        precio.valor = valor
+        precio.moneda = moneda
+        precio.estado = estado
+        
+        db.session.commit()
+        return precio_schema.jsonify(precio), 200
+
+    except KeyError as e:
+        return jsonify({"error": f"Campo faltante: {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/precio/<id>', methods=['DELETE'])
 def delete_precio(id):
-    precio = Precio.query.get(id)
-    db.session.delete(precio)
-    db.session.commit()
-    
-    return precio_schema.jsonify(precio)
+    try:
+        precio = Precio.query.get(id)
+        if precio is None:
+            return jsonify({"error": "Precio no encontrado"}), 404
 
+        db.session.delete(precio)
+        db.session.commit()
+        
+        return precio_schema.jsonify(precio), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/ppp', methods=['GET'])
 def index():
-    return jsonify({'message': 'welcome to my API baby'})
+    return jsonify({'message': 'welcome to my API baby'}), 200
 
 if __name__ == "__main__":
     with app.app_context():
